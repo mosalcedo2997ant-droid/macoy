@@ -34,7 +34,7 @@
       <nav>
   <div class="nav__header">
     <div class="nav__logo">
-      <a href="#home">
+      <a href="#Home">
         <span class="brand-name">Gio San Captures Co.</span>
         <span class="brand-subtitle">photography</span>
       </a>
@@ -56,7 +56,7 @@
     <li><a href="#contact">Contact Us</a></li>
     <li><a href="#portfolio">Portfolio</a></li>
     <li><a href="#gallery">Gallery</a></li>
-    <li><a href="login.php" class="nav__login">Login</a></li>
+    <li><a href="Login.php" class="nav__login">Login</a></li>
   </ul>
 </nav>
     </header>
