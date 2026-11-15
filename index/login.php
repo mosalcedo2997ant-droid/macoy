@@ -2,7 +2,7 @@
 require 'db.php';
 
 if (!empty($_SESSION['user_id'])) {
-    header('Location: booking.php');
+    header('Location: ' . (($_SESSION['role'] ?? '') === 'admin' ? 'admin.php' : 'booking.php'));
     exit;
 }
 
@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email'] ?? '');
     $pass  = $_POST['password'] ?? '';
 
-    $stmt = $conn->prepare('SELECT id, fullname, password FROM users WHERE email = ?');
+    $stmt = $conn->prepare('SELECT id, fullname, password, role FROM users WHERE email = ?');
     $stmt->bind_param('s', $email);
     $stmt->execute();
     $user = $stmt->get_result()->fetch_assoc();
@@ -20,7 +20,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         session_regenerate_id(true);
         $_SESSION['user_id']   = $user['id'];
         $_SESSION['user_name'] = $user['fullname'];
-        header('Location: booking.php'); // pagkatapos mag-login, diretso sa booking
+        $_SESSION['role']      = $user['role'];
+        // admin -> admin dashboard, client -> booking page
+        header('Location: ' . ($user['role'] === 'admin' ? 'admin.php' : 'booking.php'));
         exit;
     }
     $error = 'Mali ang email o password.';
