@@ -14,6 +14,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $date    = $_POST['booking_date'] ?? '';
     $service = $_POST['service'] ?? '';
     $method  = $_POST['payment_method'] ?? '';
+    $time    = $_POST['booking_time'] ?? '';
+    $phone   = preg_replace('/[\s-]/', '', trim($_POST['phone'] ?? ''));
 
     // Presyo ay galing sa server, hindi sa browser
     $price = null;
@@ -23,9 +25,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $d = DateTime::createFromFormat('Y-m-d', $date);
     $validDate = $d && $d->format('Y-m-d') === $date && $date > date('Y-m-d');
+    $validTime = (bool) preg_match('/^([01]\d|2[0-3]):[0-5]\d$/', $time);
+    $validPhone = (bool) preg_match('/^(09\d{9}|\+639\d{9})$/', $phone);
 
     if (!$validDate) {
         $error = 'Please choose a valid date (starting tomorrow).';
+    } elseif (!$validTime) {
+        $error = 'Please choose a session time.';
+    } elseif (!$validPhone) {
+        $error = 'Please enter a valid mobile number (e.g. 09171234567).';
     } elseif ($price === null) {
         $error = 'Please choose a service.';
     } elseif (!isset($PAYMENTS[$method])) {
@@ -45,10 +53,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             move_uploaded_file($_FILES['proof']['tmp_name'], 'uploads/' . $file);
 
             $down = $price / 2;
-            $stmt = $conn->prepare('INSERT INTO bookings (user_id,booking_date,service,price,downpayment,payment_method,proof_file) VALUES (?,?,?,?,?,?,?)');
-            $stmt->bind_param('issddss', $_SESSION['user_id'], $date, $service, $price, $down, $method, $file);
+            $stmt = $conn->prepare('INSERT INTO bookings (user_id,booking_date,booking_time,phone,service,price,downpayment,payment_method,proof_file) VALUES (?,?,?,?,?,?,?,?,?)');
+            $stmt->bind_param('issssddss', $_SESSION['user_id'], $date, $time, $phone, $service, $price, $down, $method, $file);
             $stmt->execute();
-            $success = true;
+            header('Location: mybooking.php?booked=1'); // diretso sa client dashboard
+            exit;
         }
     }
 }
@@ -95,6 +104,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <input type="date" id="booking_date" name="booking_date"
              min="<?= date('Y-m-d', strtotime('+1 day')) ?>"
              value="<?= e($_POST['booking_date'] ?? '') ?>" required>
+
+      <label for="booking_time">Session Time</label>
+      <input type="time" id="booking_time" name="booking_time" value="<?= e($_POST['booking_time'] ?? '') ?>" required>
+
+      <label for="phone">Mobile Number</label>
+      <input type="tel" id="phone" name="phone" placeholder="09XX XXX XXXX" autocomplete="tel" value="<?= e($_POST['phone'] ?? '') ?>" required>
 
       <label for="service">Type of Service</label>
       <select id="service" name="service" required>
